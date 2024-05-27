@@ -1,0 +1,14 @@
+{
+    auto_https off
+    servers {
+        protocol {
+            experimental_http3
+        }
+    }
+}
+
+localhost {
+    tls /caddy.crt /caddy.key
+    reverse_proxy * http://backend:8080 {
+    }
+}

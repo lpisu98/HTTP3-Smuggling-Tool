@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  caddy:
+    container_name: caddy
+    hostname: caddy
+    image: caddy:2.4.6
+    restart: unless-stopped
+    ports:
+      - "443:443/tcp"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/fullchain.pem:/caddy.crt
+      - ./caddy/privkey.pem:/caddy.key
+      - ./caddy/caddy_data:/data
+      - ./caddy/caddy_config:/config
+    extra_hosts:
+      - "host-gateway:172.17.0.1"
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+volumes:
+  caddy_data:
+    external: true
+  caddy_config:

@@ -1,0 +1,27 @@
+version: '3'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - 0.0.0.0:4433:4433
+    volumes:
+     - ./logs/:/logs/
+    
+  nginx:
+    build: ./docker-nginx-http3
+    ports:
+      - 0.0.0.0:80:80/udp
+      - 0.0.0.0:80:80/tcp
+      - 0.0.0.0:443:443/udp
+      - 0.0.0.0:443:443/tcp
+
+    volumes:
+      - ./docker-nginx-http3/tests:/static:ro 
+      - ./docker-nginx-http3/tests/modules.conf:/etc/nginx/main.d/modules.conf:ro 
+      - ./docker-nginx-http3/tests/perl_rewrite.conf:/etc/nginx/conf.d/perl_rewrite.conf:ro 
+      - ./docker-nginx-http3/tests/static.conf:/etc/nginx/conf.d/static.conf:ro 
+      - ./docker-nginx-http3/tests/https.conf:/etc/nginx/conf.d/https.conf:ro 
+      - ./docker-nginx-http3/tests/njs.conf:/etc/nginx/conf.d/njs.conf:ro 
+      - ./docker-nginx-http3/tests/njs:/opt/njs:ro 
+      - ./docker-nginx-http3/tests/localhost.crt:/etc/nginx/ssl/localhost.crt:ro 
+      - ./docker-nginx-http3/tests/localhost.key:/etc/nginx/ssl/localhost.key:ro 
