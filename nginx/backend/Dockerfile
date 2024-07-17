@@ -8,6 +8,6 @@ RUN pip install Flask
 
 ENV FLASK_APP=app.py
 
-EXPOSE 8080
+EXPOSE 4433
 
 CMD ["flask", "run", "--host=0.0.0.0", "--port=4433"]
