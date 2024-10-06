@@ -1,3 +1,5 @@
+# Kudos to Peter Gillessen for refactoring the code!
+
 import argparse
 import asyncio
 import random
@@ -26,11 +28,12 @@ import qh3
 from qh3.asyncio.client import connect
 from qh3.asyncio.protocol import QuicConnectionProtocol
 from qh3.quic.packet_builder import QuicPacketBuilder
-from qh3.h0.connection import H0_ALPN, H0Connection
+# from qh3.h0.connection import H0_ALPN, H0Connection
 from qh3.h3.connection import H3_ALPN, ErrorCode, H3Connection
 from qh3.h3.events import DataReceived, H3Event, HeadersReceived, PushPromiseReceived
 from qh3.quic.configuration import QuicConfiguration
 from qh3.quic.events import QuicEvent
+from tests import perform_tests
 logger = logging.getLogger("client")
 
 HttpConnection = Union[H3Connection]
@@ -71,7 +74,9 @@ class HttpClient(QuicConnectionProtocol):
         self._request_events: Dict[int, Deque[H3Event]] = {}
         self._request_waiter: Dict[int, asyncio.Future[Deque[H3Event]]] = {}
         if self._quic.configuration.alpn_protocols[0].startswith("hq-"):
-            self._http = H0Connection(self._quic)
+            print("ERROR: Missing python-module qh3.h0. Program exits.")
+            exit(1)
+            # self._http = H0Connection(self._quic)
         else:
             self._http = H3Connection(self._quic)
 
@@ -102,8 +107,7 @@ async def perform_normal_http_request(
     client: HttpClient,
     urls: List[str],
     params: Optional[str]=None,
-    smug_header: Optional[str]=None,
-    remove_pseudo: Optional[str]=None,
+    headers: Optional[list]=None,
     data: Optional[str]=None,
     include: bool=True,
     cookie: str="",
@@ -131,106 +135,7 @@ async def perform_normal_http_request(
         query_params = params
         full_path = parsed_url.path + '?' + query_params if query_params else parsed_url.path
 
-        if remove_pseudo != None and smug_header != None:
-            if remove_pseudo == ":method":
-                headers = [
-                    #(b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                    smug_header
-                ]
-            elif remove_pseudo == ":scheme":
-                headers = [
-                    (b":method", b"GET" if data is None else b"POST"),
-                    #(b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                    smug_header
-                ]
-            elif remove_pseudo == ":authority":
-                headers = [
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    #(b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                    smug_header
-                ]
-            elif remove_pseudo == ":path":
-                    headers=[
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    #(b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                    smug_header
-                ]
-
-        elif remove_pseudo != None:
-            if remove_pseudo == ":method":
-                headers = [
-                    #(b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                ]
-            elif remove_pseudo == ":scheme":
-                headers = [
-                    (b":method", b"GET" if data is None else b"POST"),
-                    #(b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                ]
-            elif remove_pseudo == ":authority":
-                headers = [
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    #(b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                ]
-            elif remove_pseudo == ":path":
-                    headers=[
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    #(b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                ]
-
-        elif smug_header != None:
-            if smug_header[0] == b":path":
-                headers = [
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                   # (b":path", "/test".encode()),
-                    (b":path", smug_header[1]),
-                    (b"user-agent", b"test")
-                ]
-            elif smug_header[0] == b":scheme":
-                headers =[
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", smug_header[1]),
-                    (b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test")
-                ]
-            else:
-                headers = [
-                    (b":method", b"GET" if data is None else b"POST"),
-                    (b":scheme", b"https"),
-                    (b":authority", parsed_url.netloc.encode()),
-                    (b":path", full_path.encode()),
-                    (b"user-agent", b"test"),
-                    smug_header
-                ]
-        else:
+        if headers is None:
             headers = [
                     (b":method", b"GET" if data is None else b"POST"),
                     (b":scheme", b"https"),
@@ -239,7 +144,6 @@ async def perform_normal_http_request(
                     (b"user-agent", b"test")
                 ]
 
-        
         client._http.send_headers(
             stream_id=stream_id,
             headers=headers,
@@ -259,7 +163,6 @@ async def perform_normal_http_request(
         # Wait for response
         http_events = await asyncio.shield(waiter)
         return http_events
-    
 
 
 def process_http_pushes(
@@ -289,18 +192,6 @@ def process_http_pushes(
                     elif header == b":path":
                         path = value.decode()
         logger.info("Push received for %s %s : %s bytes", method, path, octets)
-
-
-def check_response(res, test):
-    if res[0].headers[0][1] != b"200":
-        print("STATUS CODE: ", res[0].headers[0][1])
-        return False
-    elif res[0].headers[0][1] == b"200":
-        print(res[1].data)
-        if test in res[1].data:
-            return True
-        else:
-            return False
 
 
 async def main(
@@ -358,154 +249,23 @@ async def main(
         local_port=local_port,
     ) as client:
         client = cast(HttpClient, client)
-        tests = 0
-        smug_url = "https://localhost:443/"
+        urls = [urls[0]]
+        print("TARGET-URL:", urls[0])
         print("TESTING NORMAL REQUEST:")
         try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url]), timeout=2)
+            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=urls), timeout=2)
             print("NORMAL REQUEST SUCCEEDED, PROCEEDING WITH TESTS")
         except Exception as e:
             print("NORMAL REQUEST FAILED, CHECK YOUR Proxy SETTINGS")
             exit(-1)
 
-        print("TESTING FORBIDDEN CHARACTERS IN HEADER VALUES:")
-        forbidden = [chr(0x0), chr(0x0a), chr(0x0d), chr(0x09), chr(0x20)]
-        for char in forbidden:
-            tests+=1
-            print("TESTING - ", char.encode())
-            try:
-                res = await asyncio.wait_for(perform_normal_http_request(
-                    client=client,
-                    urls=[smug_url],
-                    smug_header=(b"smuggling", char.encode()+b"smuggling"),
-                ), timeout= 2)
-                print(check_response(res, char.encode()+b"smuggling"))
-            except Exception as e:
-                print("TIMEOUT", str(e))
-                pass
-            try:
-                res = await asyncio.wait_for(perform_normal_http_request(
-                    client=client,
-                    urls=[smug_url],
-                    smug_header=(b"smuggling", b"smuggling"+char.encode()),
-                ), timeout=2)
-                print(check_response(res, b"smuggling"+char.encode()))
-            except Exception as e:
-                print("TIMEOUT", str(e))
-                pass
-            try:
-                res = await asyncio.wait_for(perform_normal_http_request(
-                    client=client,
-                    urls=[smug_url],
-                    smug_header=(b"smuggling", b"smugg"+char.encode()+b"ling"),
-                ), timeout=2)
-                print(check_response(res, b"smuggling"+char.encode()))
-            except Exception as e:
-                print("TIMEOUT", str(e))
-                pass
-        print("----------------------------------------")
-        print("TEST COUNTER", tests)
-        print("TESTING FORBIDDEN CHARACTERS IN HEADER NAMES:")
-        forbidden = []
-        for i in range(0x0, 0x20):
-            forbidden.append(chr(i))
-        for i in range(0x41,0x5a):
-            forbidden.append(chr(i))
-        for i in range(0x7f,0xff):
-            forbidden.append(chr(i))
-        for i in range(len(forbidden)):
-            tests+=1
-            try:
-                print("TRYING", forbidden[i].encode())
-                res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b"malicious"+forbidden[i].encode()+b"header",b"test")), timeout=2)
-                print(check_response(res, b"malicious"+forbidden[i].encode()+b"header"))
-            except Exception as e:
-                print("TIMEOUT", str(e))
-           
-        print("----------------------------------------")
-        print("TEST COUNTER", tests)
-        print("TESTING FORBIDDEN HEADERS AND CONFLICTING")
-        print("TRANSFER ENCODING")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b"transfer-encoding",b"chunked"), data="0\r\nGET /test HTTP/1.1\r\n\r\n"), timeout=2)
-            print(res)
-        except:
-            pass
-        print("CONTENT LENGTH")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b"content-length",b"2"), data="test"), timeout=2)
-            print(res)
-        except:
-            pass
+        # Perform tests
+        print("PERFORM TESTS:")
+        num_tests = await perform_tests(client, urls[0], perform_normal_http_request)
+        print(num_tests, "TESTS COMPLETED")
 
-        print("PSEUDO-HEADER AFTER REGULAR HEADER")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b":path",b"/"), remove_pseudo=":path"), timeout=2)
-            print(res)
-        except:
-            pass
-
-        print("CONFLICTING HOST")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b"host",b"test:1234")), timeout=2)
-            print(res)
-        except:
-            pass
-        print("INVALID PSEUDO HEADER")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b":random",b"test")), timeout=2)
-            print(res)
-        except:
-            print("TIMEOUT")
-            pass
-        print("DUPLICATE PSEUDO HEADER")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], smug_header=(b":authority",b"evil.com:443")), timeout=2)
-            print(res)
-        except:
-            print("TIMEOUT")
-            pass
-        print("REMOVING PSEUDO HEADERS")
-        print("REMOVING :METHOD")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], remove_pseudo=":method"), timeout=5)
-            print(res)
-        except:
-            pass
-        print("REMOVING :SCHEME")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], remove_pseudo=":scheme"), timeout=5)
-            print(res)
-        except:
-            print("TIMEOUT")
-            pass
-        print("REMOVING :AUTHORITY")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], remove_pseudo=":authority"), timeout=5)
-            print(res)
-        except:
-            print("TIMEOUT")
-            pass
-        print("REMOVING :PATH")
-        tests+=1
-        try:
-            res = await asyncio.wait_for(perform_normal_http_request(client=client, urls=[smug_url], remove_pseudo=":path"), timeout=5)
-            print(res)
-        except:
-            print("TIMEOUT")
-            pass
         # Close QUIC connection
         client._quic.close(error_code=ErrorCode.H3_NO_ERROR)
-        print("Tests completed: ", tests)
 
 
 if __name__ == "__main__":
