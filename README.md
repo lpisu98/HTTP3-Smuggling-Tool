@@ -1,6 +1,7 @@
 # HTTP3 Proxy Tester
 
-### The repository contains both the tool and the proxy configurations
+### This tool automatically tests if a proxy correctly validates malformed HTTP requests. The code is based on a paper called "HTTP/3 will not Save you from Request Smuggling: A Methodology to Detect HTTP/3 Header (mis)Validations"
+### This repository contains both the tool and some proxies that you can use to test the tool.
 
 ## How to run the proxies
 ### Each directory contains a proxy setup, except for Aioquic every other proxy is dockerized, so just go on the directory and run
@@ -12,7 +13,7 @@
 ## How to run the tool
 
 ### After the proxy is correctly running you can type the following command to run the tests
-``` python3 smuggling.py https://localhost:443 ```
+``` python3 tests.py https://localhost:443 ```
 
 
 ## A huge thank you to the users that provide fully configured dockerized instances of proxies
