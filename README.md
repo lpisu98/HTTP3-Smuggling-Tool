@@ -13,7 +13,7 @@
 ## How to run the tool
 
 ### After the proxy is correctly running you can type the following command to run the tests
-``` python3 tests.py https://localhost:443 ```
+``` python3 smuggling.py https://localhost:443 ```
 
 
 ## A huge thank you to the users that provide fully configured dockerized instances of proxies
