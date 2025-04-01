@@ -13,17 +13,6 @@ import time
 from collections import deque
 from typing import BinaryIO, Deque, Dict, List, Optional, Union, cast
 from urllib.parse import urlparse, urlencode, parse_qs
-from qh3.quic.packet import (
-    NON_ACK_ELICITING_FRAME_TYPES,
-    NON_IN_FLIGHT_FRAME_TYPES,
-    PACKET_NUMBER_MAX_SIZE,
-    PACKET_TYPE_HANDSHAKE,
-    PACKET_TYPE_INITIAL,
-    PACKET_TYPE_MASK,
-    QuicFrameType,
-    is_long_header,
-)
-
 import qh3
 from qh3.asyncio.client import connect
 from qh3.asyncio.protocol import QuicConnectionProtocol
