@@ -29,4 +29,4 @@ class Proxy:
         response = Response(body, status_code=original.status, headers=original.headers)
         await response(scope, receive, send)
 
-app = Proxy("http://localhost:5000")
+app = Proxy("http://backend:5000")

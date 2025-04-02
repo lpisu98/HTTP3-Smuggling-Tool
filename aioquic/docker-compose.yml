@@ -1,9 +1,12 @@
-version: "3"
 services:
-  backend-server:
+  aioquic:
+    build: 
+      context: ./aioquic
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:443:4433/udp"
+      - "0.0.0.0:443:4433/tcp"
+  backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "5000:8080"
-
