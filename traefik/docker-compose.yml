@@ -13,9 +13,9 @@ services:
     ports:
       - "80:80"
       # support traditional http/1 and http/2 via the tcp protocol (tcp is the default when omitted)
-      - "443:443/tcp" # this is identical to "443:443", but we want to be explicit here to avoid confusion
+      - "0.0.0.0:443:443/tcp" # this is identical to "443:443", but we want to be explicit here to avoid confusion
       # http/3 runs over udp, so we need to expose it as well
-      - "443:443/udp"
+      - "0.0.0.0:443:443/udp"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./traefik_dynamic_conf.yml:/traefik_dynamic_conf.yml"
